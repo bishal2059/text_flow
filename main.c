@@ -1,5 +1,6 @@
 // includes
 #include <stdio.h>
+#include <string.h>
 #include <errno.h>
 #include <ctype.h>
 #include <stdlib.h>
@@ -8,11 +9,14 @@
 #include <unistd.h>
 
 // defines
+#define TEXT_FLOW_VERSION "0.0.1"
+
 #define CTRL_KEY(k) ((k) & 0x1f)
 
 // data
 struct editorConfig
 {
+  int cx, cy;
   int screenrows;
   int screencols;
   struct termios orig_termios;
@@ -163,8 +167,31 @@ void editorDrawRows(struct abuf *ab)
   int y;
   for (y = 0; y < E.screenrows; y++)
   {
-    abAppend(ab, "~", 1);
-
+    if (y == E.screenrows / 3)
+    {
+      char welcome[80];
+      int welcomelen = snprintf(welcome, sizeof(welcome),
+                                "Text flow -- version %s", TEXT_FLOW_VERSION);
+      if (welcomelen > E.screencols)
+      {
+        welcomelen = E.screencols;
+      }
+      int padding = (E.screencols - welcomelen) / 2;
+      if (padding)
+      {
+        abAppend(ab, "~", 1);
+        padding--;
+      }
+      while (padding--)
+      {
+        abAppend(ab, " ", 1);
+      }
+      abAppend(ab, welcome, welcomelen);
+    }
+    else
+    {
+      abAppend(ab, "~", 1);
+    }
     abAppend(ab, "\x1b[K", 3);
     if (y < E.screenrows - 1)
     {
@@ -182,7 +209,12 @@ void editorRefreshScreen()
   abAppend(&ab, "\x1b[H", 3);
 
   editorDrawRows(&ab);
-  abAppend(&ab, "\x1b[H", 3);
+
+  char buf[32];
+  snprintf(buf, sizeof(buf), "\x1b[%d;%dH", E.cy + 1, E.cx + 1);
+  abAppend(&ab, buf, strlen(buf));
+
+  // abAppend(&ab, "\x1b[H", 3);
   abAppend(&ab, "\x1b[?25h", 6);
 
   write(STDOUT_FILENO, ab.b, ab.len);
@@ -194,6 +226,12 @@ void initEditor()
 {
   if (getWindowSize(&E.screenrows, &E.screencols) == -1)
     die("getWindowSize");
+}
+
+void initEditor()
+{
+  E.cx = 0;
+  E.cy = 0;
 }
 
 int main()
