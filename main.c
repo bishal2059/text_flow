@@ -15,10 +15,10 @@
 
 enum editorKey
 {
-  ARROW_LEFT = 'a',
-  ARROW_RIGHT = 'd',
-  ARROW_UP = 'w',
-  ARROW_DOWN = 's'
+  ARROW_LEFT = 1000,
+  ARROW_RIGHT ,
+  ARROW_UP ,
+  ARROW_DOWN
 };
 
 // data
@@ -68,7 +68,7 @@ void enableRawMode()
     die("tcsetattr");
 }
 
-char editorReadKey()
+int editorReadKey()
 {
   int nread;
   char c;
@@ -111,7 +111,7 @@ char editorReadKey()
 
 // input
 
-void editorMoveCursor(char key)
+void editorMoveCursor(int key)
 {
   switch (key)
   {
@@ -132,7 +132,7 @@ void editorMoveCursor(char key)
 
 void editorProcessKeypress()
 {
-  char c = editorReadKey();
+  int c = editorReadKey();
 
   switch (c)
   {
